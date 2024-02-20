@@ -1,56 +1,25 @@
 #include <iostream>
 #include <iomanip>
-#include <cctype>
-#include <ctime>
-#include <vector>
+#include <string>
+#include <algorithm>
+#include <chrono>
+#include <random>
 
 using namespace std;
-
-bool korrektne(string & number) {
-    int summa = 0;
-    bool kahekordne = false;
-    
-    // Liigun läbi kõik numbrid krediitkaardi numbris tagurpidi
-    for (int i = number.length() - 1; i >= 0; --i) {
-        char c = number[i];
-        //kontrolli kas sümbol on number
-        if (!isdigit(c)) {
-            return false; // kui ei ole number, tagasta false
-        }
-
-        int num = c - '0';
-
-        // Kui on iga teise numbri kord, korruta seda kahega
-        if (kahekordne) {
-            num *= 2;
-
-            // Kui tulemus on kahekohaline, siis lahuta 9-ga
-            if (num > 9) {
-                num -= 9;
-            }
-        }
-        
-        summa += num;
-
-        kahekordne = !kahekordne;
-    }
-
-    return (summa % 10 == 0);
-}
 
 void kolmnurk() {
     int ruum, read;
     
-    cout << " ";
+    cout << "";
     cin >> read;
 
     for(int i = 1, k = 0; i <= read; ++i, k = 0) {
         for(ruum = 1; ruum <= read-i; ++ruum) {
-            cout << "  ";
+            cout << " ";
         }
         
         while(k != 2*i-1) {
-            cout << "* ";
+            cout << "*";
             ++k;
         }
         cout << endl;
@@ -68,98 +37,74 @@ void tabel(double algus, double kesk, double lõpp) {
 }
 
 void krediitkaart() {    
-    string krediitkaardiNumber;
+    string number;
+    cout << "";
+    cin >> number;
 
-    cout << " ";
-    cin >> krediitkaardiNumber;
-    
-    if (korrektne(krediitkaardiNumber)) {
-        cout << "Korrektne" << endl;
-    } else {
-        cout << "Vale" << endl;
+    int summa = 0, kahekordne = 0;
+
+    for (int i = number.length() - 1; i >= 0; --i) {
+        char c = number[i];
+        if (!isdigit(c)) {
+            cout << "vale" << endl;
+            return;
+        }
+
+        int num = c - 0;
+        if (kahekordne) {
+            num *= 2;
+            num -= (num > 9) ? 9 : 0;
+        }
+
+        summa += num;
+        kahekordne = !kahekordne;
     }
 
+    cout << (summa % 10 == 0 ? "korrektne" : "vale") << endl;
 }
 
 void blackjack() {
-    vector<int> looKaardipakk() {
-        vector<int> kaardipakk;
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 2; j <= 11; ++j) {
-                kaardipakk.push_back(j);
-            }
-        }
-        return kaardipakk;
-    }
+    const int suurus = 32;
+    int kaardipakk[suurus];
+    iota(kaardipakk, kaardipakk + suurus, 2);
+    
+    auto jagakaart = [&kaardipakk]() {
+        static mt19937 mt(static_cast<unsigned>(chrono::system_clock::now().time_since_epoch().count()));
+        uniform_int_distribution<int> dist(0, suurus - 1);
 
-    int jagakaart(vector<int> & kaardipakk) {
-        static size_t index = 0;
-        return kaardipakk[index++];
-    }
+        int index = dist(mt);
+        int kaart = kaardipakk[index];
+        swap(kaardipakk[index], kaardipakk[suurus - 1]);
+        return min(kaart, 11);
+    };
 
-    int arvutaSumma(vector<int> & kaardid) {
-        int summa = 0;
-        for (int kaart : kaardid) {
-            summa += kaart;
-        }
-        return summa;
-    }
+    auto arvutSumma = [](const int * kaardid, int suurus) {
+        return accumulate(kaardid, kaardid + suurus, 0);
+    };
 
-    vector<int> kaardipakk = looKaardipakk();
-    srand(static_cast<unsigned>(time(nullptr)));
-
-    vector<int> kasutajaKaardid;
-    vector<int> arvutiKaardid;
-
-    // Arvuti jagab esimese kaardi
-    arvutiKaardid.push_back(jagakaart(kaardipakk));
-    cout << "Arvuti esimene kaart: " << arvutiKaardid[0] << endl;
-
-    // Kasutaja saab kaks esimest kaarti
-    kasutajaKaardid.push_back(jagakaart(kaardipakk));
-    kasutajaKaardid.push_back(jagakaart(kaardipakk));
+    int kasutajaKaardid[2] = {jagakaart(), jagakaart()};
 
     while (true) {
-        cout << "Sinu kaardid: ";
-        for (int kaart : kasutajaKaardid) {
-            cout << kaart << " ";
-        }
-        cout << "(Summa: " << arvutaSumma(kasutajaKaardid) << ")" << endl;
-
+        cout << "Sinu kaardid: " << kasutajaKaardid[0] << " " << kasutajaKaardid[1] << " (Summa: " << arvutSumma(kasutajaKaardid, 2) << ")" << endl;
+        
         char vastus;
-        cout << "Kas soovid veel kaarti? (J/E): ";
+        cout << "Kas soovid veel kaarti? (J/E)";
         cin >> vastus;
 
         if (tolower(vastus) == 'j') {
-            kasutajaKaardid.push_back(jagakaart(kaardipakk));
+            kasutajaKaardid[1] = jagakaart();
         } else {
             break;
         }
 
-        if (arvutaSumma(kasutajaKaardid) > 21) {
-            cout << "Ületasid 21! kaotus!" << endl;
+        if (arvutSumma(kasutajaKaardid, 2) > 21) {
+            cout << "Ületasid 21!" << endl;
             return;
         }
     }
-    
-    while (arvutaSumma(arvutiKaardid) < 17) {
-        arvutiKaardid.push_back(jagakaart(kaardipakk));
-    }
 
-    cout << "Arvuti kaardid: ";
-    for (int kaart : arvutiKaardid) {
-        cout << kaart << " ";
-    }
-    cout << "(Summa: " << arvutaSumma(arvutiKaardid) << ")" << endl;
-
-    // Kontrollime võitu, kaotust või viiki
-    if (arvutaSumma(arvutiKaardid) > 21 || (arvutaSumma(kasutajaKaardid) > arvutaSumma(arvutiKaardid) && arvutaSumma(kasutajaKaardid) <= 21)) {
-        cout << "Võitsid" << endl;
-    } else if (arvutaSumma(kasutajaKaardid) == arvutaSumma(arvutiKaardid)) {
-        cout << "Viik" << endl;
-    } else {
-        cout << "Kaotus" << endl;
-    }
+    cout << "Sinu lõplikud kaardid: " << kasutajaKaardid[0] << " " << kasutajaKaardid[1] << "(Summa: " << arvutSumma(kasutajaKaardid, 2) << ")" << endl;
+    cout << (arvutSumma(kasutajaKaardid, 2) == 21 ? "Võitsid!" : "Kaotasid") << endl;
 }
 
 #if !defined(VPL_TEST)
