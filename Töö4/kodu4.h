@@ -8,9 +8,9 @@
 using namespace std;
 
 // Mallifunktsioonid
-template<typename T, typename U>
+template<typename T, typename N>
 requires integral<T> || floating_point<T> || is_same<T, string>::value
-T liida(T a, U b) {
+T liida(T a, N b) {
     return a + b;
 };
 
