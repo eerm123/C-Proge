@@ -3,13 +3,11 @@
 
 #include <iostream>
 #include <concepts>
-#include <string>
 
 using namespace std;
 
 // Mallifunktsioonid
 template<typename T, typename N>
-requires integral<T> || floating_point<T> || is_same<T, string>::value
 T liida(T a, N b) {
     return a + b;
 };
@@ -78,7 +76,6 @@ void Massiiv<T>::print() {
 
 template<typename T>
 void Massiiv<T>::lisaElement(T el) {
-    static_assert(liida<T, T>);
     if (suurus < MAKS_PIKKUS) {
         massiiv[suurus++] = el;
     }
